@@ -13,6 +13,7 @@ export default function Home() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showFavorites, setShowFavorites] = useState(false);
 
   useEffect(() => {
     async function loadCards() {
@@ -26,21 +27,31 @@ export default function Home() {
 
       const combinedCards = [...STARTER_PACK, ...customCards];
       setAllCards(combinedCards);
-      setCurrentDeck(combinedCards);
       
       const storedFavorites = localStorage.getItem("croatian-tutor-favorites");
+      let initialFavorites: string[] = [];
       if (storedFavorites) {
-        setFavorites(JSON.parse(storedFavorites));
+        initialFavorites = JSON.parse(storedFavorites);
+        setFavorites(initialFavorites);
+      }
+
+      if (showFavorites) {
+        setCurrentDeck(combinedCards.filter(card => initialFavorites.includes(card.id)));
+      } else {
+        setCurrentDeck(combinedCards);
       }
       setIsLoading(false);
     }
 
     loadCards();
-  }, []);
+  }, [showFavorites]); // Re-run when showFavorites changes
 
   useEffect(() => {
     localStorage.setItem("croatian-tutor-favorites", JSON.stringify(favorites));
-  }, [favorites]);
+    if (showFavorites) {
+      setCurrentDeck(allCards.filter(card => favorites.includes(card.id)));
+    }
+  }, [favorites, allCards, showFavorites]);
 
   const handleNext = useCallback(() => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % currentDeck.length);
@@ -54,18 +65,25 @@ export default function Home() {
 
   const handleShuffle = useCallback(() => {
     setCurrentDeck((prevDeck) => {
-      const shuffled = [...prevDeck].sort(() => Math.random() - 0.5);
+      const deckToShuffle = showFavorites ? allCards.filter(card => favorites.includes(card.id)) : allCards;
+      const shuffled = [...deckToShuffle].sort(() => Math.random() - 0.5);
       return shuffled;
     });
     setCurrentIndex(0); // Reset to the first card after shuffling
-  }, []);
+  }, [allCards, favorites, showFavorites]);
 
   const handleToggleFavorite = useCallback((id: string) => {
-    setFavorites((prevFavorites) =>
-      prevFavorites.includes(id)
+    setFavorites((prevFavorites) => {
+      const newFavorites = prevFavorites.includes(id)
         ? prevFavorites.filter((favId) => favId !== id)
-        : [...prevFavorites, id]
-    );
+        : [...prevFavorites, id];
+      return newFavorites;
+    });
+  }, []);
+
+  const handleViewFavorites = useCallback(() => {
+    setShowFavorites((prev) => !prev);
+    setCurrentIndex(0); // Reset index when switching views
   }, []);
 
   if (isLoading) {
@@ -92,19 +110,32 @@ export default function Home() {
         Croatian Flashcards
       </h1>
 
-      <Flashcard
-        card={currentCard}
-        isFavorite={favorites.includes(currentCard.id)}
-        onToggleFavorite={handleToggleFavorite}
-      />
+      {currentDeck.length > 0 ? (
+        <Flashcard
+          card={currentDeck[currentIndex]}
+          isFavorite={favorites.includes(currentDeck[currentIndex].id)}
+          onToggleFavorite={handleToggleFavorite}
+        />
+      ) : (
+        <p className="text-xl text-zinc-700 dark:text-zinc-300">No cards to display in this view.</p>
+      )}
 
-      <Controls
-        onNext={handleNext}
-        onPrevious={handlePrevious}
-        onShuffle={handleShuffle}
-        currentIndex={currentIndex}
-        totalCards={currentDeck.length}
-      />
+      {currentDeck.length > 0 && (
+        <Controls
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          onShuffle={handleShuffle}
+          currentIndex={currentIndex}
+          totalCards={currentDeck.length}
+        />
+      )}
+
+      <button
+        onClick={handleViewFavorites}
+        className="mt-8 px-4 py-2 text-sm font-medium rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-200"
+      >
+        {showFavorites ? "View All Cards" : `View Favorites (${favorites.length})`}
+      </button>
     </div>
   );
 }

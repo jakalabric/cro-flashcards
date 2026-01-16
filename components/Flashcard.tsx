@@ -54,7 +54,7 @@ export default function Flashcard({ card, isFavorite, onToggleFavorite }: Flashc
 
         {/* Back (English) */}
         <div 
-          className="absolute inset-0 w-full h-full backface-hidden rounded-3xl bg-zinc-50 dark:bg-zinc-800 shadow-xl border-2 border-zinc-200 dark:border-zinc-700 flex flex-col items-center justify-center p-8 text-center"
+          className="absolute inset-0 w-full h-full backface-hidden rounded-3xl bg-blue-50 dark:bg-zinc-700 shadow-xl border-2 border-blue-100 dark:border-zinc-600 flex flex-col items-center justify-center p-8 text-center"
           style={{ transform: "rotateY(180deg)" }}
         >
           <span className="text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">
