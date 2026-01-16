@@ -26,10 +26,10 @@ export default function Flashcard({ card, isFavorite, onToggleFavorite }: Flashc
           e.stopPropagation();
           onToggleFavorite(card.id);
         }}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/80 dark:bg-zinc-800/80 shadow-md backdrop-blur-sm transition-transform active:scale-95"
+        className="absolute top-4 right-4 z-10 p-3 rounded-full bg-white/80 dark:bg-zinc-800/80 shadow-md backdrop-blur-sm transition-transform active:scale-95"
       >
         <Star
-          size={24}
+          size={34}
           className={isFavorite ? "fill-yellow-400 text-yellow-400" : "text-zinc-400"}
         />
       </button>
@@ -42,28 +42,48 @@ export default function Flashcard({ card, isFavorite, onToggleFavorite }: Flashc
         onClick={handleFlip}
       >
         {/* Front (Croatian) */}
-        <div className="absolute inset-0 w-full h-full backface-hidden rounded-3xl bg-white dark:bg-zinc-900 shadow-xl border-2 border-zinc-100 dark:border-zinc-800 flex flex-col items-center justify-center p-8 text-center">
-          <span className="text-sm font-medium text-blue-500 mb-4 uppercase tracking-wider">
+        <div className={`absolute inset-0 w-full h-full backface-hidden rounded-3xl shadow-xl border-2 flex flex-col items-center justify-center p-8 text-center
+          ${card.id === "sp1" // Check for "Pomalo" card
+            ? "bg-red-600 border-white" // Red background, white border
+            : "bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800"}
+        `}>
+          <span className={`text-sm font-medium mb-4 uppercase tracking-wider
+            ${card.id === "sp1" ? "text-white" : "text-blue-500"}
+          `}>
             {card.category}
           </span>
-          <h2 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 break-words">
+          <h2 className={`text-4xl font-bold break-words
+            ${card.id === "sp1" ? "text-white" : "text-zinc-900 dark:text-zinc-50"}
+          `}>
             {card.croatian}
           </h2>
-          <p className="mt-8 text-zinc-400 text-sm italic">Tap to see translation</p>
+          <p className={`mt-8 text-sm italic
+            ${card.id === "sp1" ? "text-white/80" : "text-zinc-400"}
+          `}>Tap to see translation</p>
         </div>
 
         {/* Back (English) */}
-        <div 
-          className="absolute inset-0 w-full h-full backface-hidden rounded-3xl bg-blue-50 dark:bg-zinc-700 shadow-xl border-2 border-blue-100 dark:border-zinc-600 flex flex-col items-center justify-center p-8 text-center"
+        <div
+          className={`absolute inset-0 w-full h-full backface-hidden rounded-3xl shadow-xl border-2 flex flex-col items-center justify-center p-8 text-center
+            ${card.id === "sp1" // Check for "Pomalo" card
+              ? "bg-blue-600 border-white" // Blue background, white border
+              : "bg-blue-50 dark:bg-zinc-700 border-blue-100 dark:border-zinc-600"}
+          `}
           style={{ transform: "rotateY(180deg)" }}
         >
-          <span className="text-sm font-medium text-zinc-400 mb-4 uppercase tracking-wider">
+          <span className={`text-sm font-medium mb-4 uppercase tracking-wider
+            ${card.id === "sp1" ? "text-white" : "text-zinc-400"}
+          `}>
             English
           </span>
-          <h2 className="text-3xl font-semibold text-zinc-800 dark:text-zinc-200 break-words">
+          <h2 className={`text-3xl font-semibold break-words
+            ${card.id === "sp1" ? "text-white" : "text-zinc-800 dark:text-zinc-200"}
+          `}>
             {card.english}
           </h2>
-          <p className="mt-8 text-zinc-400 text-sm italic">Tap to see original</p>
+          <p className={`mt-8 text-sm italic
+            ${card.id === "sp1" ? "text-white/80" : "text-zinc-400"}
+          `}>Tap to see original</p>
         </div>
       </motion.div>
     </div>

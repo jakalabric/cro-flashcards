@@ -239,4 +239,7 @@ export const STARTER_PACK: Flashcard[] = [
   { id: "v18", croatian: "Razumjeti", english: "To understand", category: "Verbs" },
   { id: "v19", croatian: "Misliti", english: "To think", category: "Verbs" },
   { id: "v20", croatian: "Znati", english: "To know", category: "Verbs" },
+
+  // SPECIAL PHRASES
+  { id: "sp1", croatian: "Pomalo", english: "It is what it is", category: "Special Phrases" },
 ];

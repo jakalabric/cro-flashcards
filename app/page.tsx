@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Flashcard as FlashcardType } from "@/lib/types";
 import { STARTER_PACK } from "@/lib/starter-pack";
 import { fetchCustomCards } from "@/lib/csv-fetcher";
@@ -27,6 +27,7 @@ export default function Home() {
   const [favorites, setFavorites] = useState<string[]>(getStoredFavorites);
   const [isLoading, setIsLoading] = useState(true);
   const [showFavorites, setShowFavorites] = useState(false);
+  const prevShowFavorites = useRef(showFavorites);
 
   useEffect(() => {
     async function loadCards() {
@@ -39,7 +40,32 @@ export default function Home() {
       }
 
       const combinedCards = [...STARTER_PACK, ...customCards];
-      setAllCards(combinedCards);
+
+      // Separate the greeting card (g1) and the rest of the cards
+      // Separate greeting cards and other cards
+      const greetingCards = combinedCards.filter(card => card.category === "Greetings");
+      const nonGreetingCards = combinedCards.filter(card => card.category !== "Greetings");
+
+      let firstCard: FlashcardType | undefined;
+      let remainingCards: FlashcardType[] = [];
+
+      if (greetingCards.length > 0) {
+        // Select a random greeting card to be the first
+        const randomIndex = Math.floor(Math.random() * greetingCards.length);
+        firstCard = greetingCards[randomIndex];
+        remainingCards = [...greetingCards.filter((_, i) => i !== randomIndex), ...nonGreetingCards];
+      } else {
+        remainingCards = nonGreetingCards;
+      }
+
+      // Shuffle the remaining cards
+      const shuffledRemainingCards = [...remainingCards].sort(() => Math.random() - 0.5);
+
+      // Combine the first card (if found) with the shuffled remaining cards
+      const initialDeck = firstCard ? [firstCard, ...shuffledRemainingCards] : shuffledRemainingCards;
+
+      setAllCards(initialDeck);
+      setCurrentDeck(initialDeck);
       setIsLoading(false);
     }
 
@@ -60,8 +86,26 @@ export default function Home() {
     const deckToSet = showFavorites
       ? allCards.filter(card => favorites.includes(card.id))
       : allCards;
-    setCurrentDeck(deckToSet);
-    setCurrentIndex(0);
+
+    // Only reset index if the deck content actually changes, or if showFavorites is toggled
+    // This prevents resetting when only favorites are added/removed within the current view
+    const currentDeckIds = currentDeck.map(card => card.id);
+    const newDeckIds = deckToSet.map(card => card.id);
+
+    const deckContentChanged = JSON.stringify(currentDeckIds) !== JSON.stringify(newDeckIds);
+
+    if (deckContentChanged || showFavorites !== prevShowFavorites.current) {
+      setCurrentDeck(deckToSet);
+      setCurrentIndex(0);
+    } else if (deckToSet.length > 0 && currentDeck.length === 0) {
+      // Handle case where deck was empty and now has cards (e.g., after loading)
+      setCurrentDeck(deckToSet);
+      setCurrentIndex(0);
+    } else {
+      setCurrentDeck(deckToSet);
+    }
+
+    prevShowFavorites.current = showFavorites;
   }, [allCards, showFavorites, favorites]);
 
   const handleNext = useCallback(() => {
@@ -141,7 +185,7 @@ export default function Home() {
 
       <button
         onClick={handleViewFavorites}
-        className="mt-8 px-4 py-2 text-sm font-medium rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-200"
+        className="mt-8 px-6 py-3 text-base font-medium rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-200"
       >
         {showFavorites ? "View All Cards" : `View Favorites (${favorites.length})`}
       </button>
