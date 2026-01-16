@@ -35,23 +35,23 @@ export default function Home() {
         setFavorites(initialFavorites);
       }
 
-      if (showFavorites) {
-        setCurrentDeck(combinedCards.filter(card => initialFavorites.includes(card.id)));
-      } else {
-        setCurrentDeck(combinedCards);
-      }
       setIsLoading(false);
     }
 
     loadCards();
-  }, [showFavorites]); // Re-run when showFavorites changes
+  }, []); // Only run once on mount
+
+  useEffect(() => {
+    const deckToSet = showFavorites
+      ? allCards.filter(card => favorites.includes(card.id))
+      : allCards;
+    setCurrentDeck(deckToSet);
+    setCurrentIndex(0); // Reset index whenever the deck changes
+  }, [allCards, favorites, showFavorites]);
 
   useEffect(() => {
     localStorage.setItem("croatian-tutor-favorites", JSON.stringify(favorites));
-    if (showFavorites) {
-      setCurrentDeck(allCards.filter(card => favorites.includes(card.id)));
-    }
-  }, [favorites, allCards, showFavorites]);
+  }, [favorites]);
 
   const handleNext = useCallback(() => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % currentDeck.length);
