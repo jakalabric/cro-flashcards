@@ -7,11 +7,24 @@ import { fetchCustomCards } from "@/lib/csv-fetcher";
 import Flashcard from "@/components/Flashcard";
 import Controls from "@/components/Controls";
 
+const STORAGE_KEY = "croatian-tutor-favorites";
+
+function getStoredFavorites(): string[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.error("Failed to load favorites from localStorage:", e);
+    return [];
+  }
+}
+
 export default function Home() {
   const [allCards, setAllCards] = useState<FlashcardType[]>([]);
   const [currentDeck, setCurrentDeck] = useState<FlashcardType[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<string[]>(getStoredFavorites);
   const [isLoading, setIsLoading] = useState(true);
   const [showFavorites, setShowFavorites] = useState(false);
 
@@ -27,31 +40,29 @@ export default function Home() {
 
       const combinedCards = [...STARTER_PACK, ...customCards];
       setAllCards(combinedCards);
-      
-      const storedFavorites = localStorage.getItem("croatian-tutor-favorites");
-      let initialFavorites: string[] = [];
-      if (storedFavorites) {
-        initialFavorites = JSON.parse(storedFavorites);
-        setFavorites(initialFavorites);
-      }
-
       setIsLoading(false);
     }
 
     loadCards();
-  }, []); // Only run once on mount
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
+      }
+    } catch (e) {
+      console.error("Failed to save favorites to localStorage:", e);
+    }
+  }, [favorites]);
 
   useEffect(() => {
     const deckToSet = showFavorites
       ? allCards.filter(card => favorites.includes(card.id))
       : allCards;
     setCurrentDeck(deckToSet);
-    setCurrentIndex(0); // Reset index whenever the deck changes
-  }, [allCards, favorites, showFavorites]);
-
-  useEffect(() => {
-    localStorage.setItem("croatian-tutor-favorites", JSON.stringify(favorites));
-  }, [favorites]);
+    setCurrentIndex(0);
+  }, [allCards, showFavorites, favorites]);
 
   const handleNext = useCallback(() => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % currentDeck.length);
@@ -69,7 +80,7 @@ export default function Home() {
       const shuffled = [...deckToShuffle].sort(() => Math.random() - 0.5);
       return shuffled;
     });
-    setCurrentIndex(0); // Reset to the first card after shuffling
+    setCurrentIndex(0);
   }, [allCards, favorites, showFavorites]);
 
   const handleToggleFavorite = useCallback((id: string) => {
@@ -83,7 +94,7 @@ export default function Home() {
 
   const handleViewFavorites = useCallback(() => {
     setShowFavorites((prev) => !prev);
-    setCurrentIndex(0); // Reset index when switching views
+    setCurrentIndex(0);
   }, []);
 
   if (isLoading) {
@@ -101,8 +112,6 @@ export default function Home() {
       </div>
     );
   }
-
-  const currentCard = currentDeck[currentIndex];
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-4">
