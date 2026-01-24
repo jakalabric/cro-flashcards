@@ -25,7 +25,7 @@ export default function Flashcard({
 
   return (
     <div 
-      className="relative w-full max-w-2xl aspect-[16/10] cursor-pointer perspective-1000"
+      className="relative w-full max-w-sm aspect-[3/4] cursor-pointer perspective-1000"
       onClick={() => setIsFlipped(!isFlipped)}
     >
       <div
