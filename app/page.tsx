@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, MouseEvent } from "react";
 import { Flashcard as FlashcardType } from "@/lib/types";
 import { STARTER_PACK } from "@/lib/starter-pack";
 import { fetchCustomCards } from "@/lib/csv-fetcher";
@@ -29,6 +29,7 @@ export default function Home() {
   const [showFavorites, setShowFavorites] = useState(false);
   const prevShowFavorites = useRef(showFavorites);
 
+  // Load cards on mount
   useEffect(() => {
     async function loadCards() {
       setIsLoading(true);
@@ -40,9 +41,6 @@ export default function Home() {
       }
 
       const combinedCards = [...STARTER_PACK, ...customCards];
-
-      // Separate the greeting card (g1) and the rest of the cards
-      // Separate greeting cards and other cards
       const greetingCards = combinedCards.filter(card => card.category === "Greetings");
       const nonGreetingCards = combinedCards.filter(card => card.category !== "Greetings");
 
@@ -50,7 +48,6 @@ export default function Home() {
       let remainingCards: FlashcardType[] = [];
 
       if (greetingCards.length > 0) {
-        // Select a random greeting card to be the first
         const randomIndex = Math.floor(Math.random() * greetingCards.length);
         firstCard = greetingCards[randomIndex];
         remainingCards = [...greetingCards.filter((_, i) => i !== randomIndex), ...nonGreetingCards];
@@ -58,10 +55,7 @@ export default function Home() {
         remainingCards = nonGreetingCards;
       }
 
-      // Shuffle the remaining cards
       const shuffledRemainingCards = [...remainingCards].sort(() => Math.random() - 0.5);
-
-      // Combine the first card (if found) with the shuffled remaining cards
       const initialDeck = firstCard ? [firstCard, ...shuffledRemainingCards] : shuffledRemainingCards;
 
       setAllCards(initialDeck);
@@ -72,33 +66,24 @@ export default function Home() {
     loadCards();
   }, []);
 
+  // Save favorites to localStorage
   useEffect(() => {
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
-      }
-    } catch (e) {
-      console.error("Failed to save favorites to localStorage:", e);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
     }
   }, [favorites]);
 
+  // Handle deck filtering (Favorites vs All)
   useEffect(() => {
     const deckToSet = showFavorites
       ? allCards.filter(card => favorites.includes(card.id))
       : allCards;
 
-    // Only reset index if the deck content actually changes, or if showFavorites is toggled
-    // This prevents resetting when only favorites are added/removed within the current view
     const currentDeckIds = currentDeck.map(card => card.id);
     const newDeckIds = deckToSet.map(card => card.id);
-
     const deckContentChanged = JSON.stringify(currentDeckIds) !== JSON.stringify(newDeckIds);
 
     if (deckContentChanged || showFavorites !== prevShowFavorites.current) {
-      setCurrentDeck(deckToSet);
-      setCurrentIndex(0);
-    } else if (deckToSet.length > 0 && currentDeck.length === 0) {
-      // Handle case where deck was empty and now has cards (e.g., after loading)
       setCurrentDeck(deckToSet);
       setCurrentIndex(0);
     } else {
@@ -108,14 +93,27 @@ export default function Home() {
     prevShowFavorites.current = showFavorites;
   }, [allCards, showFavorites, favorites]);
 
+  // SPEECH HANDLER
+  const handleSpeech = useCallback((e: MouseEvent<HTMLButtonElement>, text: string) => {
+    e.stopPropagation(); // Stop the card from flipping
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Attempt to find a Croatian voice
+    const voices = window.speechSynthesis.getVoices();
+    const hrVoice = voices.find(v => v.lang.startsWith('hr'));
+    if (hrVoice) utterance.voice = hrVoice;
+    utterance.lang = 'hr-HR';
+    utterance.rate = 0.9;
+    
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
   const handleNext = useCallback(() => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % currentDeck.length);
   }, [currentDeck.length]);
 
   const handlePrevious = useCallback(() => {
-    setCurrentIndex(
-      (prevIndex) => (prevIndex - 1 + currentDeck.length) % currentDeck.length
-    );
+    setCurrentIndex((prevIndex) => (prevIndex - 1 + currentDeck.length) % currentDeck.length);
   }, [currentDeck.length]);
 
   const handleShuffle = useCallback(() => {
@@ -128,12 +126,9 @@ export default function Home() {
   }, [allCards, favorites, showFavorites]);
 
   const handleToggleFavorite = useCallback((id: string) => {
-    setFavorites((prevFavorites) => {
-      const newFavorites = prevFavorites.includes(id)
-        ? prevFavorites.filter((favId) => favId !== id)
-        : [...prevFavorites, id];
-      return newFavorites;
-    });
+    setFavorites((prevFavorites) => 
+      prevFavorites.includes(id) ? prevFavorites.filter(favId => favId !== id) : [...prevFavorites, id]
+    );
   }, []);
 
   const handleViewFavorites = useCallback(() => {
@@ -141,51 +136,31 @@ export default function Home() {
     setCurrentIndex(0);
   }, []);
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-        <p className="text-xl text-zinc-700 dark:text-zinc-300">Loading flashcards...</p>
-      </div>
-    );
-  }
-
-  if (currentDeck.length === 0) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-        <p className="text-xl text-zinc-700 dark:text-zinc-300">No flashcards available.</p>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black"><p>Loading...</p></div>;
+  if (currentDeck.length === 0) return <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black"><p>No cards available.</p></div>;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-4">
-      <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-8">
-        Croatian Flashcards
-      </h1>
+      <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-8">Croatian Flashcards</h1>
 
-      {currentDeck.length > 0 ? (
-        <Flashcard
-          card={currentDeck[currentIndex]}
-          isFavorite={favorites.includes(currentDeck[currentIndex].id)}
-          onToggleFavorite={handleToggleFavorite}
-        />
-      ) : (
-        <p className="text-xl text-zinc-700 dark:text-zinc-300">No cards to display in this view.</p>
-      )}
+      <Flashcard
+        card={currentDeck[currentIndex]}
+        isFavorite={favorites.includes(currentDeck[currentIndex].id)}
+        onToggleFavorite={handleToggleFavorite}
+        onSpeech={(e) => handleSpeech(e, currentDeck[currentIndex].croatian)} // Passing the handler
+      />
 
-      {currentDeck.length > 0 && (
-        <Controls
-          onNext={handleNext}
-          onPrevious={handlePrevious}
-          onShuffle={handleShuffle}
-          currentIndex={currentIndex}
-          totalCards={currentDeck.length}
-        />
-      )}
+      <Controls
+        onNext={handleNext}
+        onPrevious={handlePrevious}
+        onShuffle={handleShuffle}
+        currentIndex={currentIndex}
+        totalCards={currentDeck.length}
+      />
 
       <button
         onClick={handleViewFavorites}
-        className="mt-8 px-6 py-3 text-base font-medium rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 focus:outline-none focus:ring-4 focus:ring-purple-300 transition-all duration-200"
+        className="mt-8 px-6 py-3 text-base font-medium rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700"
       >
         {showFavorites ? "View All Cards" : `View Favorites (${favorites.length})`}
       </button>

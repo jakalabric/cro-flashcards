@@ -13,27 +13,60 @@ export async function fetchCustomCards(): Promise<Flashcard[]> {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          const cards: Flashcard[] = results.data.map((row: any, index: number) => {
-            // Adjust these keys based on actual CSV headers if they differ
-            // Common headers for Google Translate exported sheets are 'Croatian' and 'English'
-            // or sometimes they are just columns without headers if not careful.
-            // Using a fallback to first and second column if headers don't match.
-            const keys = Object.keys(row);
-            const croatian = row[keys[0]] || "";
-            const english = row[keys[1]] || "";
-            
-            return {
-              id: `custom-${index}`,
-              croatian: croatian.trim(),
-              english: english.trim(),
-              category: "Custom",
-              isCustom: true,
-            };
-          }).filter(card => card.croatian && card.english);
-          
+          const cards = results.data
+            .map((row: any, index: number) => {
+              try {
+                // Skip if row is not an object or is empty
+                if (!row || typeof row !== 'object') {
+                  return null;
+                }
+
+                // Get all values from the row
+                const values = Object.values(row);
+                if (!values.length) {
+                  return null;
+                }
+
+                // Find English text using case-insensitive header matching or first value
+                const english = (
+                  row['English'] ||
+                  row['english'] ||
+                  values[0] ||
+                  ""
+                ).trim();
+
+                // Find Croatian text using case-insensitive header matching or second value
+                const croatian = (
+                  row['Croatian'] ||
+                  row['croatian'] ||
+                  values[1] ||
+                  ""
+                ).trim();
+
+                // Only return valid cards with both values
+                if (!english || !croatian) {
+                  return null;
+                }
+                
+                return {
+                  id: `custom-${index}`,
+                  croatian,
+                  english,
+                  category: "Custom",
+                  isCustom: true,
+                } as Flashcard;
+              } catch (error) {
+                console.error("Error mapping row:", error, row);
+                return null;
+              }
+            })
+            .filter((card): card is Flashcard => card !== null); // Type guard to filter out nulls
+
+          console.log("Fetched Cards:", cards);
           resolve(cards);
         },
         error: (error: any) => {
+          console.error("CSV parsing error:", error);
           reject(error);
         }
       });
