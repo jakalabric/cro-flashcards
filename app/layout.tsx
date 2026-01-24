@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pomalo Croatian App",
-  description: "Created by a Kalabric",
+  title: "Pomalo Cards",
+  description: "A relaxed way to learn Croatian",
 };
 
 export default function RootLayout({
