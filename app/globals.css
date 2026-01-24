@@ -36,4 +36,13 @@ body {
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
   }
+  .card-front {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .card-back {
+    filter: brightness(0.85);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
 }

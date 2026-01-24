@@ -34,7 +34,7 @@ export default function Flashcard({
         }`}
       >
         {/* Front Side (English) */}
-        <div className="absolute inset-0 w-full h-full backface-hidden bg-white dark:bg-zinc-900 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border border-zinc-200 dark:border-zinc-800">
+        <div className="absolute inset-0 w-full h-full card-front bg-white dark:bg-zinc-900 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border border-zinc-200 dark:border-zinc-800">
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -57,7 +57,7 @@ export default function Flashcard({
         </div>
 
         {/* Back Side (Croatian) */}
-        <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-zinc-50 dark:bg-zinc-800 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border border-zinc-200 dark:border-zinc-800">
+        <div className="absolute inset-0 w-full h-full card-back rotate-y-180 bg-zinc-50 dark:bg-zinc-800 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border border-zinc-200 dark:border-zinc-800">
           <span className="text-purple-600 dark:text-purple-400 text-sm font-medium mb-4 uppercase tracking-widest">
             Croatian
           </span>
