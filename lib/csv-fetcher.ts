@@ -48,11 +48,22 @@ export async function fetchCustomCards(): Promise<Flashcard[]> {
                   return null;
                 }
                 
+                // Get all keys from the row
+                const keys = Object.keys(row);
+                
+                // Extract category using fallback chain
+                const category = (
+                  row['Category'] ||
+                  row['category'] ||
+                  row[keys[2]] ||
+                  "Uncategorized"
+                ).trim();
+
                 return {
                   id: `custom-${index}`,
                   croatian,
                   english,
-                  category: "Custom",
+                  category,
                   isCustom: true,
                 } as Flashcard;
               } catch (error) {

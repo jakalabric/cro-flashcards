@@ -6,6 +6,9 @@ interface ControlsProps {
   onNext: () => void;
   onPrevious: () => void;
   onShuffle: () => void;
+  onViewFavorites: () => void;
+  showFavorites: boolean;
+  favoritesCount: number;
   currentIndex: number;
   totalCards: number;
 }
@@ -14,11 +17,15 @@ export default function Controls({
   onNext,
   onPrevious,
   onShuffle,
+  onViewFavorites,
+  showFavorites,
+  favoritesCount,
   currentIndex,
   totalCards,
 }: ControlsProps) {
   return (
-    <div className="flex flex-row justify-center items-center gap-4 mt-8 w-full">
+    <div className="flex flex-col items-center gap-4 mt-8 w-full">
+      <div className="flex flex-row justify-center items-center gap-4">
       <button
         onClick={onPrevious}
         disabled={currentIndex === 0}
@@ -41,6 +48,13 @@ export default function Controls({
       >
         <span className="ml-1">Next</span>
         <ChevronRight size={22} />
+      </button>
+      </div>
+      <button
+        onClick={onViewFavorites}
+        className="px-6 py-2 text-base font-medium rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 transition-colors"
+      >
+        {showFavorites ? "View All Cards" : `View Favorites (${favoritesCount})`}
       </button>
     </div>
   );

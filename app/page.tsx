@@ -27,6 +27,8 @@ export default function Home() {
   const [favorites, setFavorites] = useState<string[]>(getStoredFavorites);
   const [isLoading, setIsLoading] = useState(true);
   const [showFavorites, setShowFavorites] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [uniqueCategories, setUniqueCategories] = useState<string[]>(['All']);
   const prevShowFavorites = useRef(showFavorites);
 
   // Load cards on mount
@@ -60,6 +62,11 @@ export default function Home() {
 
       setAllCards(initialDeck);
       setCurrentDeck(initialDeck);
+      
+      // Extract and set unique categories
+      const categories = Array.from(new Set(initialDeck.map(card => card.category)));
+      setUniqueCategories(['All', ...categories.sort()]);
+      
       setIsLoading(false);
     }
 
@@ -73,25 +80,33 @@ export default function Home() {
     }
   }, [favorites]);
 
-  // Handle deck filtering (Favorites vs All)
+  // Handle deck filtering (Favorites, Categories)
   useEffect(() => {
-    const deckToSet = showFavorites
-      ? allCards.filter(card => favorites.includes(card.id))
-      : allCards;
+    let filteredDeck = allCards;
+
+    // Apply favorites filter if active
+    if (showFavorites) {
+      filteredDeck = filteredDeck.filter(card => favorites.includes(card.id));
+    }
+
+    // Apply category filter if not showing all
+    if (selectedCategory !== 'All') {
+      filteredDeck = filteredDeck.filter(card => card.category === selectedCategory);
+    }
 
     const currentDeckIds = currentDeck.map(card => card.id);
-    const newDeckIds = deckToSet.map(card => card.id);
+    const newDeckIds = filteredDeck.map(card => card.id);
     const deckContentChanged = JSON.stringify(currentDeckIds) !== JSON.stringify(newDeckIds);
 
     if (deckContentChanged || showFavorites !== prevShowFavorites.current) {
-      setCurrentDeck(deckToSet);
+      setCurrentDeck(filteredDeck);
       setCurrentIndex(0);
     } else {
-      setCurrentDeck(deckToSet);
+      setCurrentDeck(filteredDeck);
     }
 
     prevShowFavorites.current = showFavorites;
-  }, [allCards, showFavorites, favorites]);
+  }, [allCards, showFavorites, favorites, selectedCategory]);
 
   // SPEECH HANDLER
   const handleSpeech = useCallback((e: MouseEvent<HTMLButtonElement>, text: string) => {
@@ -143,6 +158,21 @@ export default function Home() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-4">
       <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-8">Pomalo Cards</h1>
 
+      <div className="w-full max-w-sm flex items-center mb-6">
+        <select
+          value={selectedCategory}
+          onChange={(e) => {
+            setSelectedCategory(e.target.value);
+            setCurrentIndex(0);
+          }}
+          className="w-full px-4 py-2 rounded-full bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-zinc-50 focus:outline-none focus:ring-2 focus:ring-purple-500"
+        >
+          {uniqueCategories.map(category => (
+            <option key={category} value={category}>{category}</option>
+          ))}
+        </select>
+      </div>
+
       <Flashcard
         card={currentDeck[currentIndex]}
         isFavorite={favorites.includes(currentDeck[currentIndex].id)}
@@ -154,16 +184,13 @@ export default function Home() {
         onNext={handleNext}
         onPrevious={handlePrevious}
         onShuffle={handleShuffle}
+        onViewFavorites={handleViewFavorites}
+        showFavorites={showFavorites}
+        favoritesCount={favorites.length}
         currentIndex={currentIndex}
         totalCards={currentDeck.length}
       />
 
-      <button
-        onClick={handleViewFavorites}
-        className="mt-8 px-6 py-3 text-base font-medium rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700"
-      >
-        {showFavorites ? "View All Cards" : `View Favorites (${favorites.length})`}
-      </button>
     </div>
   );
   
