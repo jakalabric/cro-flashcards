@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, MouseEvent, TouchEvent } from "react";
+import { useState, useEffect, useCallback, useRef, MouseEvent } from "react";
 import { Flashcard as FlashcardType } from "@/lib/types";
 import { STARTER_PACK } from "@/lib/starter-pack";
 import { fetchCustomCards } from "@/lib/csv-fetcher";
 import Flashcard from "@/components/Flashcard";
 import Controls from "@/components/Controls";
+import { motion, AnimatePresence } from "framer-motion";
 
 const STORAGE_KEY = "croatian-tutor-favorites";
 
@@ -30,11 +31,6 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [uniqueCategories, setUniqueCategories] = useState<string[]>(['All']);
   const prevShowFavorites = useRef(showFavorites);
-
-  // Swipe detection state
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-  const minSwipeDistance = 50;
 
   // Load cards on mount
   useEffect(() => {
@@ -156,27 +152,17 @@ export default function Home() {
     setCurrentIndex(0);
   }, []);
 
-  // Swipe Handlers
-  const onTouchStart = (e: TouchEvent) => {
-    touchEndX.current = null;
-    touchStartX.current = e.targetTouches[0].clientX;
-  };
+  // Drag handlers for Tinder-style swipe
+  const handleDragEnd = (event: any, info: any) => {
+    const dragDistance = info.offset.x;
+    const dragThreshold = 100;
 
-  const onTouchMove = (e: TouchEvent) => {
-    touchEndX.current = e.targetTouches[0].clientX;
-  };
-
-  const onTouchEnd = () => {
-    if (!touchStartX.current || !touchEndX.current) return;
-    
-    const distance = touchStartX.current - touchEndX.current;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-
-    if (isLeftSwipe) {
-      handleNext();
-    } else if (isRightSwipe) {
+    if (dragDistance > dragThreshold) {
+      // Swipe right - go to previous card
       handlePrevious();
+    } else if (dragDistance < -dragThreshold) {
+      // Swipe left - go to next card
+      handleNext();
     }
   };
 
@@ -192,12 +178,12 @@ export default function Home() {
   if (currentDeck.length === 0) return <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black"><p>No cards available.</p></div>;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-4">
-      <h1 className="w-full max-w-sm text-center font-black uppercase text-2xl sm:text-3xl md:text-4xl bg-gradient-to-b from-[#FF0000] from-[33%] via-[#FFFFFF] via-[33%] via-[66%] to-[#0000BF] to-[66%] bg-clip-text text-transparent [-webkit-text-stroke:1.5px_white] drop-shadow-[0_5px_5px_rgba(0,0,0,0.4)] mt-12 mb-16">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-4 overflow-hidden">
+      <h1 className="w-full text-center font-black uppercase tracking-tighter text-[12vw] sm:text-[10vw] md:text-7xl bg-gradient-to-b from-[#FF0000] from-[33%] via-[#FFFFFF] via-[33%] via-[66%] to-[#0000BF] to-[66%] bg-clip-text text-transparent [-webkit-text-stroke:1px_white] drop-shadow-lg mt-6 mb-8">
         Pomalo Cards
       </h1>
 
-      <div className="w-full max-w-sm flex items-center mb-6">
+      <div className="w-full max-w-sm flex items-center mb-4">
         <select
           value={selectedCategory}
           onChange={(e) => {
@@ -212,19 +198,34 @@ export default function Home() {
         </select>
       </div>
 
-      <div 
-        className="w-full max-w-sm touch-none"
-        style={{ touchAction: 'pan-y' }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        <Flashcard
-          card={currentDeck[currentIndex]}
-          isFavorite={favorites.includes(currentDeck[currentIndex].id)}
-          onToggleFavorite={handleToggleFavorite}
-          onSpeech={(e) => handleSpeech(e, currentDeck[currentIndex].croatian)}
-        />
+      <div className="w-full max-w-sm touch-none" style={{ touchAction: 'pan-y' }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentDeck[currentIndex]?.id}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ 
+              opacity: 0, 
+              scale: 0.8,
+              x: 1000,
+              rotate: 15,
+              transition: { duration: 0.3 }
+            }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={handleDragEnd}
+            whileDrag={{ rotate: 5 }}
+            className="cursor-grab active:cursor-grabbing"
+          >
+            <Flashcard
+              card={currentDeck[currentIndex]}
+              isFavorite={favorites.includes(currentDeck[currentIndex].id)}
+              onToggleFavorite={handleToggleFavorite}
+              onSpeech={(e) => handleSpeech(e, currentDeck[currentIndex].croatian)}
+            />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       <Controls
@@ -237,8 +238,6 @@ export default function Home() {
         currentIndex={currentIndex}
         totalCards={currentDeck.length}
       />
-
     </div>
   );
-  
 }
