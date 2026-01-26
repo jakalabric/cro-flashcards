@@ -31,6 +31,7 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [uniqueCategories, setUniqueCategories] = useState<string[]>(['All']);
   const prevShowFavorites = useRef(showFavorites);
+  const swipeDirection = useRef<'left' | 'right' | null>(null);
 
   // Load cards on mount
   useEffect(() => {
@@ -125,10 +126,12 @@ export default function Home() {
   }, []);
 
   const handleNext = useCallback(() => {
+    swipeDirection.current = 'left';
     setCurrentIndex((prevIndex) => (prevIndex + 1) % currentDeck.length);
   }, [currentDeck.length]);
 
   const handlePrevious = useCallback(() => {
+    swipeDirection.current = 'right';
     setCurrentIndex((prevIndex) => (prevIndex - 1 + currentDeck.length) % currentDeck.length);
   }, [currentDeck.length]);
 
@@ -159,9 +162,11 @@ export default function Home() {
 
     if (dragDistance > dragThreshold) {
       // Swipe right - go to previous card
+      swipeDirection.current = 'right';
       handlePrevious();
     } else if (dragDistance < -dragThreshold) {
       // Swipe left - go to next card
+      swipeDirection.current = 'left';
       handleNext();
     }
   };
@@ -177,9 +182,33 @@ export default function Home() {
   }
   if (currentDeck.length === 0) return <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black"><p>No cards available.</p></div>;
 
+  const getExitAnimation = () => {
+    if (swipeDirection.current === 'left') {
+      return {
+        opacity: 0,
+        x: -1000,
+        rotate: -20,
+        transition: { duration: 0.3 }
+      };
+    } else if (swipeDirection.current === 'right') {
+      return {
+        opacity: 0,
+        x: 1000,
+        rotate: 20,
+        transition: { duration: 0.3 }
+      };
+    }
+    // Default exit animation if direction is not set
+    return {
+      opacity: 0,
+      scale: 0.8,
+      transition: { duration: 0.3 }
+    };
+  };
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-4 overflow-hidden">
-      <h1 className="w-full text-center font-black uppercase tracking-tighter text-[12vw] sm:text-[10vw] md:text-7xl bg-gradient-to-b from-[#FF0000] from-[33%] via-[#FFFFFF] via-[33%] via-[66%] to-[#0000BF] to-[66%] bg-clip-text text-transparent [-webkit-text-stroke:1px_white] drop-shadow-lg mt-6 mb-8">
+      <h1 className="w-[85%] mx-auto text-center font-black uppercase tracking-tighter text-[12vw] sm:text-[10vw] md:text-7xl bg-gradient-to-b from-[#FF0000] from-[33%] via-[#FFFFFF] via-[33%] via-[66%] to-[#0000BF] to-[66%] bg-clip-text text-transparent [-webkit-text-stroke:0.5px_rgba(0,0,0,0.3)] dark:[-webkit-text-stroke:0.5px_rgba(255,255,255,0.5)] drop-shadow-lg mt-6 mb-8">
         Pomalo Cards
       </h1>
 
@@ -204,13 +233,7 @@ export default function Home() {
             key={currentDeck[currentIndex]?.id}
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ 
-              opacity: 0, 
-              scale: 0.8,
-              x: 1000,
-              rotate: 15,
-              transition: { duration: 0.3 }
-            }}
+            exit={getExitAnimation()}
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             dragElastic={0.2}
