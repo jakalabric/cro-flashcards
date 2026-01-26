@@ -208,7 +208,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-4 overflow-hidden">
-      <h1 className="w-[85%] mx-auto text-center font-black uppercase tracking-tighter text-[12vw] sm:text-[10vw] md:text-7xl bg-gradient-to-b from-[#FF0000] from-[33%] via-[#FFFFFF] via-[33%] via-[66%] to-[#0000BF] to-[66%] bg-clip-text text-transparent [-webkit-text-stroke:0.5px_rgba(0,0,0,0.3)] dark:[-webkit-text-stroke:0.5px_rgba(255,255,255,0.5)] drop-shadow-lg mt-6 mb-8">
+      <h1 className="w-[85%] mx-auto text-center font-black uppercase tracking-tighter text-4xl sm:text-5xl md:text-7xl bg-gradient-to-b from-[#FF0000] from-[33%] via-[#FFFFFF] via-[33%] via-[66%] to-[#0000BF] to-[66%] bg-clip-text text-transparent [-webkit-text-stroke:0.5px_rgba(0,0,0,0.3)] dark:[-webkit-text-stroke:0.5px_rgba(255,255,255,0.5)] drop-shadow-lg mt-6 mb-8 whitespace-nowrap">
         Pomalo Cards
       </h1>
 
