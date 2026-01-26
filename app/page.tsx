@@ -157,18 +157,24 @@ export default function Home() {
 
   // Drag handlers for Tinder-style swipe
   const handleDragEnd = (event: any, info: any) => {
-    const dragDistance = info.offset.x;
-    const dragThreshold = 100;
-
-    if (dragDistance > dragThreshold) {
-      // Swipe right - go to previous card
-      swipeDirection.current = 'right';
-      handlePrevious();
-    } else if (dragDistance < -dragThreshold) {
-      // Swipe left - go to next card
+    const { offset, velocity } = info;
+    const offsetX = offset.x;
+    const velocityX = velocity.x;
+    
+    // Calculate swipe confidence threshold
+    const swipeConfidenceThreshold = Math.abs(offsetX) * Math.abs(velocityX);
+    
+    // Swipe Left (Next): offset.x < -100 OR velocity.x < -500
+    if (offsetX < -100 || velocityX < -500) {
       swipeDirection.current = 'left';
       handleNext();
     }
+    // Swipe Right (Prev): offset.x > 100 OR velocity.x > 500
+    else if (offsetX > 100 || velocityX > 500) {
+      swipeDirection.current = 'right';
+      handlePrevious();
+    }
+    // If neither threshold is met, the card will snap back automatically
   };
 
   if (isLoading) {
@@ -235,8 +241,10 @@ export default function Home() {
             animate={{ opacity: 1, scale: 1 }}
             exit={getExitAnimation()}
             drag="x"
+            dragDirectionLock={true}
             dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.2}
+            dragElastic={0.7}
+            dragMomentum={false}
             onDragEnd={handleDragEnd}
             whileDrag={{ rotate: 5 }}
             className="cursor-grab active:cursor-grabbing"
