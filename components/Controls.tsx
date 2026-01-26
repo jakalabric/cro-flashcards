@@ -36,7 +36,7 @@ export default function Controls({
       </button>
       <button
         onClick={onShuffle}
-        className="flex items-center justify-center text-base px-4 py-3 rounded-full bg-zinc-700 text-white shadow-lg hover:bg-zinc-800 focus:outline-none focus:ring-4 focus:ring-zinc-500"
+        className="flex items-center justify-center text-base px-4 py-3 rounded-full bg-red-500 text-white shadow-lg hover:bg-red-600 focus:outline-none focus:ring-4 focus:ring-red-300"
       >
         <Shuffle size={22} />
         <span className="ml-1">Shuffle</span>
@@ -52,7 +52,7 @@ export default function Controls({
       </div>
       <button
         onClick={onViewFavorites}
-        className="px-6 py-2 text-base font-medium rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 transition-colors"
+        className="px-6 py-2 text-base font-medium rounded-full bg-amber-500 text-white shadow-lg hover:bg-amber-600 transition-colors"
       >
         {showFavorites ? "View All Cards" : `View Favorites (${favoritesCount})`}
       </button>

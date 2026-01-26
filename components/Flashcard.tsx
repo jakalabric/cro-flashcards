@@ -11,6 +11,17 @@ interface FlashcardProps {
   onSpeech: (e: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+  Greetings: "text-blue-500 dark:text-blue-400",
+  Basics: "text-green-500 dark:text-green-400",
+  Numbers: "text-orange-500 dark:text-orange-400",
+  Food: "text-red-500 dark:text-red-400",
+  Travel: "text-purple-500 dark:text-purple-400",
+  Family: "text-pink-500 dark:text-pink-400",
+  Verbs: "text-indigo-500 dark:text-indigo-400",
+  Adjectives: "text-teal-500 dark:text-teal-400",
+};
+
 export default function Flashcard({
   card,
   isFavorite,
@@ -22,6 +33,8 @@ export default function Flashcard({
   useEffect(() => {
     setIsFlipped(false);
   }, [card.id]);
+
+  const categoryColor = CATEGORY_COLORS[card.category] || "text-zinc-400 dark:text-zinc-500";
 
   return (
     <div 
@@ -35,6 +48,11 @@ export default function Flashcard({
       >
         {/* Front Side (English) */}
         <div className="absolute inset-0 w-full h-full card-front bg-white dark:bg-zinc-900 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border border-zinc-200 dark:border-zinc-800">
+          <div className="absolute top-6 left-6">
+            <span className={`text-xs font-bold uppercase tracking-tighter ${categoryColor}`}>
+              {card.category}
+            </span>
+          </div>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -58,6 +76,11 @@ export default function Flashcard({
 
         {/* Back Side (Croatian) */}
         <div className="absolute inset-0 w-full h-full card-back rotate-y-180 bg-zinc-50 dark:bg-zinc-800 rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border border-zinc-200 dark:border-zinc-800">
+          <div className="absolute top-6 left-6">
+            <span className={`text-xs font-bold uppercase tracking-tighter ${categoryColor}`}>
+              {card.category}
+            </span>
+          </div>
           <span className="text-purple-600 dark:text-purple-400 text-sm font-medium mb-4 uppercase tracking-widest">
             Croatian
           </span>

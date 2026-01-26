@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, MouseEvent } from "react";
+import { useState, useEffect, useCallback, useRef, MouseEvent, TouchEvent } from "react";
 import { Flashcard as FlashcardType } from "@/lib/types";
 import { STARTER_PACK } from "@/lib/starter-pack";
 import { fetchCustomCards } from "@/lib/csv-fetcher";
@@ -30,6 +30,11 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [uniqueCategories, setUniqueCategories] = useState<string[]>(['All']);
   const prevShowFavorites = useRef(showFavorites);
+
+  // Swipe detection state
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const minSwipeDistance = 50;
 
   // Load cards on mount
   useEffect(() => {
@@ -151,12 +156,46 @@ export default function Home() {
     setCurrentIndex(0);
   }, []);
 
-  if (isLoading) return <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black"><p>Loading...</p></div>;
+  // Swipe Handlers
+  const onTouchStart = (e: TouchEvent) => {
+    touchEndX.current = null;
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchMove = (e: TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+    
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      handleNext();
+    } else if (isRightSwipe) {
+      handlePrevious();
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+        <div className="flag-loader text-8xl">
+          🇭🇷
+        </div>
+      </div>
+    );
+  }
   if (currentDeck.length === 0) return <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black"><p>No cards available.</p></div>;
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-black p-4">
-      <h1 className="text-4xl font-bold text-zinc-900 dark:text-zinc-50 mb-8">Pomalo Cards</h1>
+      <h1 className="w-full max-w-sm text-center font-black uppercase text-2xl sm:text-3xl md:text-4xl bg-gradient-to-b from-[#FF0000] from-[33%] via-[#FFFFFF] via-[33%] via-[66%] to-[#0000BF] to-[66%] bg-clip-text text-transparent [-webkit-text-stroke:1.5px_white] drop-shadow-[0_5px_5px_rgba(0,0,0,0.4)] mt-12 mb-16">
+        Pomalo Cards
+      </h1>
 
       <div className="w-full max-w-sm flex items-center mb-6">
         <select
@@ -173,12 +212,20 @@ export default function Home() {
         </select>
       </div>
 
-      <Flashcard
-        card={currentDeck[currentIndex]}
-        isFavorite={favorites.includes(currentDeck[currentIndex].id)}
-        onToggleFavorite={handleToggleFavorite}
-        onSpeech={(e) => handleSpeech(e, currentDeck[currentIndex].croatian)} // Passing the handler
-      />
+      <div 
+        className="w-full max-w-sm touch-none"
+        style={{ touchAction: 'pan-y' }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <Flashcard
+          card={currentDeck[currentIndex]}
+          isFavorite={favorites.includes(currentDeck[currentIndex].id)}
+          onToggleFavorite={handleToggleFavorite}
+          onSpeech={(e) => handleSpeech(e, currentDeck[currentIndex].croatian)}
+        />
+      </div>
 
       <Controls
         onNext={handleNext}
